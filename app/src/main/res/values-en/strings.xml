@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CourseWork</string>
+    <string name="search">Search</string>
+    <string name="board">Schedule</string>
+    <string name="orders">Orders</string>
+    <string name="profile">Profile</string>
+    <string name="more">More</string>
+</resources>

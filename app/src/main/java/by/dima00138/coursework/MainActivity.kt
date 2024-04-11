@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.rememberNavController
 import by.dima00138.coursework.ui.theme.CourseWorkTheme
 import by.dima00138.coursework.views.BottomNavBar
 import by.dima00138.coursework.views.MainScreen
@@ -28,34 +29,17 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val navController = rememberNavController()
+
                     Scaffold (
-                        topBar = { TopBar() },
+                        topBar = { TopBar(navController) },
                         modifier = Modifier.padding(0.dp),
-                        bottomBar = { BottomNavBar() },
+                        bottomBar = { BottomNavBar(navController) },
                     )
                     { innerPadding ->
-                        MainScreen(modifier = Modifier.padding(innerPadding))
+                        NavControl(modifier = Modifier.padding(innerPadding), navController)
                     }
                 }
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CourseWorkTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Scaffold (
-                modifier = Modifier.padding(0.dp),
-                bottomBar = { BottomNavBar() },
-            )
-            { innerPadding ->
-                MainScreen(modifier = Modifier.padding(innerPadding))
             }
         }
     }

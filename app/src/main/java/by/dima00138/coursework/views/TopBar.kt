@@ -26,17 +26,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import by.dima00138.coursework.R
 import by.dima00138.coursework.viewModels.NavigationBarVM
+import by.dima00138.coursework.viewModels.Screen
 import by.dima00138.coursework.viewModels.TopBarVM
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(viewModel: TopBarVM = viewModel(), navController: NavController? = null) {
+fun TopBar(navController: NavController, viewModel: TopBarVM = viewModel()) {
     val title : String by viewModel.title.observeAsState("")
     val showNavIcon: Boolean by viewModel.showNavIcon.observeAsState(true)
     TopAppBar(
         navigationIcon = {
             if (showNavIcon) {
-                IconButton(onClick = { navController?.navigateUp() }) {
+                IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Go Back"
@@ -45,7 +46,7 @@ fun TopBar(viewModel: TopBarVM = viewModel(), navController: NavController? = nu
             }
         },
         title = { TitleTopAppBar(title = title) },
-        actions = {IconButton(onClick = { /*TODO*/ }) {
+        actions = {IconButton(onClick = { navController.navigate(Screen.Orders.route) }) {
            Icon(imageVector = Icons.Outlined.ShoppingCart, contentDescription = "Cart")
         }}
     )

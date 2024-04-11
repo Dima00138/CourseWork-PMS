@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">CourseWork</string>
+    <string name="search">Поиск</string>
+    <string name="board">Расписание</string>
+    <string name="orders">Заказы</string>
+    <string name="profile">Профиль</string>
+    <string name="more">Больше</string>
 </resources>

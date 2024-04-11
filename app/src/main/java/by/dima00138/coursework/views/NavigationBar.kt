@@ -14,14 +14,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.currentBackStackEntryAsState
 import by.dima00138.coursework.ui.theme.CourseWorkTheme
 import by.dima00138.coursework.viewModels.NavigationBarVM
 
 @Composable
-fun BottomNavBar(viewModel: NavigationBarVM = viewModel()) {
+fun BottomNavBar( navController: NavController, viewModel: NavigationBarVM = viewModel()) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
     val selectedItem by viewModel.selectedItem.observeAsState(0)
     NavigationBar(
         contentColor = Color.Gray,
@@ -29,32 +35,23 @@ fun BottomNavBar(viewModel: NavigationBarVM = viewModel()) {
             ambientColor = Color.Black, spotColor = Color.Black)
     ) {
         viewModel.items.forEachIndexed { index, item ->
-            val selected = selectedItem == index
+            val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
             val tintColor by animateColorAsState(
                 if (selected) Color.Blue else Color.Gray
             )
             NavigationBarItem(
                 icon = {
                     Icon(
-                        painter = painterResource(id = viewModel.icons[index]),
+                        painter = painterResource(id = item.icon),
                         contentDescription = null,
                         tint = tintColor
                     )
                 },
-                label = { Text(item, color = tintColor) },
+                label = { Text(stringResource(item.resourceId), color = tintColor) },
                 selected = selected,
-                onClick = { viewModel.selectedItemChange(index) },
+                onClick = { viewModel.selectedItemChange(index, navController) },
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
             )
         }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun BottomNavBarPreview() {
-    CourseWorkTheme {
-        BottomNavBar()
     }
 }
