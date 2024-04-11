@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -15,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import by.dima00138.coursework.ui.theme.CourseWorkTheme
 import by.dima00138.coursework.views.BottomNavBar
 import by.dima00138.coursework.views.MainScreen
+import by.dima00138.coursework.views.TopBar
 
 class MainActivity : ComponentActivity() {
 
@@ -27,6 +29,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Scaffold (
+                        topBar = { TopBar() },
                         modifier = Modifier.padding(0.dp),
                         bottomBar = { BottomNavBar() },
                     )
