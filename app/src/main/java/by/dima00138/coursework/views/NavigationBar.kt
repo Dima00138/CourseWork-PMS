@@ -1,8 +1,12 @@
 package by.dima00138.coursework.views
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -10,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -31,8 +36,8 @@ fun BottomNavBar( navController: NavController, viewModel: NavigationBarVM = vie
     val selectedItem by viewModel.selectedItem.observeAsState(0)
     NavigationBar(
         contentColor = Color.Gray,
-        modifier = Modifier.padding(0.dp).height(60.dp).shadow(elevation = 4.dp,
-            ambientColor = Color.Black, spotColor = Color.Black)
+        modifier = Modifier.padding(0.dp).shadow(elevation = 4.dp,
+            ambientColor = Color.Black, spotColor = Color.Black),
     ) {
         viewModel.items.forEachIndexed { index, item ->
             val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -50,7 +55,7 @@ fun BottomNavBar( navController: NavController, viewModel: NavigationBarVM = vie
                 label = { Text(stringResource(item.resourceId), color = tintColor) },
                 selected = selected,
                 onClick = { viewModel.selectedItemChange(index, navController) },
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+                modifier = Modifier.padding(4.dp, 0.dp, 4.dp, 0.dp)
             )
         }
     }

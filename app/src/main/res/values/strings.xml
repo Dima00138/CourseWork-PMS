@@ -5,4 +5,9 @@
     <string name="orders">Заказы</string>
     <string name="profile">Профиль</string>
     <string name="more">Больше</string>
+    <string name="header_search">Where are you going?</string>
+    <string name="from">Откуда</string>
+    <string name="where">Куда</string>
+    <string name="when">Когда</string>
+    <string name="back">Обратно</string>
 </resources>

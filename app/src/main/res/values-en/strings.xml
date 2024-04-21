@@ -6,4 +6,9 @@
     <string name="orders">Orders</string>
     <string name="profile">Profile</string>
     <string name="more">More</string>
+    <string name="header_search">Куда вы направляетесь?</string>
+    <string name="from">From</string>
+    <string name="where">Where</string>
+    <string name="back">Back</string>
+    <string name="when">When</string>
 </resources>
