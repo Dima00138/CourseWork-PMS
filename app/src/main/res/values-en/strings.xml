@@ -6,9 +6,16 @@
     <string name="orders">Orders</string>
     <string name="profile">Profile</string>
     <string name="more">More</string>
-    <string name="header_search">Куда вы направляетесь?</string>
+    <string name="header_search">Where are you going?</string>
     <string name="from">From</string>
     <string name="where">Where</string>
     <string name="back">Back</string>
     <string name="when">When</string>
+    <string name="departure">Departure</string>
+    <string name="arrival">Arrival</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="web_client_id">299408633060-nkvf9h5q73ahco2l68557h13ormr9gp6.apps.googleusercontent.com</string>
+    <string name="logout">Logout</string>
+    <string name="submit">Submit</string>
 </resources>

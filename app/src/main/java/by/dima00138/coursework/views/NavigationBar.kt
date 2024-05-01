@@ -12,6 +12,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -22,18 +23,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import by.dima00138.coursework.ui.theme.CourseWorkTheme
+import by.dima00138.coursework.viewModels.BoardVM
 import by.dima00138.coursework.viewModels.NavigationBarVM
 
 @Composable
-fun BottomNavBar( navController: NavController, viewModel: NavigationBarVM = viewModel()) {
+fun BottomNavBar( navController: NavController, viewModel: NavigationBarVM = hiltViewModel<NavigationBarVM>()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val selectedItem by viewModel.selectedItem.observeAsState(0)
     NavigationBar(
         contentColor = Color.Gray,
         modifier = Modifier.padding(0.dp).shadow(elevation = 4.dp,

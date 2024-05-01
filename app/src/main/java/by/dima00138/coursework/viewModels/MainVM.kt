@@ -2,28 +2,43 @@ package by.dima00138.coursework.viewModels
 
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 
-    enum class Inputs{
+enum class Inputs{
         None, FromInput, ToInput, WhenDateInput, ReturnDateInput
     }
 
-class MainVM : ViewModel() {
-    var showList = MutableLiveData(false)
-    var input = MutableLiveData<Inputs>(Inputs.None)
-    var searchText = MutableLiveData("")
-    var from = MutableLiveData("")
-    var to = MutableLiveData("")
-    var whenDate = MutableLiveData(LocalDate.now())
-    var returnDate = MutableLiveData<LocalDate?>(null)
+@HiltViewModel
+class MainVM @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
+) : ViewModel() {
+    var showList = MutableStateFlow(false)
+    var input = MutableStateFlow<Inputs>(Inputs.None)
+    var showDatePicker = MutableStateFlow(false)
+    var datePick = MutableStateFlow<Inputs>(Inputs.None)
+    var searchText = MutableStateFlow("")
+    var from = MutableStateFlow("")
+    var to = MutableStateFlow("")
+    var whenDate = MutableStateFlow(LocalDate.now())
+    var returnDate = MutableStateFlow<LocalDate?>(null)
     val items = listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 1", "Item 2", "Item 3", "Item 4", "Item 5")
 
     fun onShowListChange(state: Boolean, inputs : Inputs) {
         showList.value = state
         input.value = inputs
+    }
 
+    fun onShowDatePickerChange(state: Boolean, inputs : Inputs) {
+        showDatePicker.value = state
+        datePick.value = inputs
     }
 
     fun onSearchTextChange(state: String) {
@@ -36,12 +51,10 @@ class MainVM : ViewModel() {
             Inputs.FromInput -> from.value = state
             Inputs.ToInput -> to.value = state
             Inputs.WhenDateInput -> {
-                val formatter = DateTimeFormatter.ofPattern("d/MM/yyyy")
-                whenDate.value = LocalDate.parse(state, formatter)
+                whenDate.value = Instant.ofEpochMilli(state.toLong()).atZone(ZoneId.systemDefault()).toLocalDate()
             }
             Inputs.ReturnDateInput -> {
-                val formatter = DateTimeFormatter.ofPattern("d/MM/yyyy")
-                returnDate.value = LocalDate.parse(state, formatter)
+                returnDate.value = Instant.ofEpochMilli(state.toLong()).atZone(ZoneId.systemDefault()).toLocalDate()
             }
         }
 

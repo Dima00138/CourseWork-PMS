@@ -1,5 +1,7 @@
 package by.dima00138.coursework
 
+import android.annotation.SuppressLint
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.layout.waterfall
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Scaffold
@@ -36,17 +40,23 @@ import by.dima00138.coursework.ui.theme.NavBar
 import by.dima00138.coursework.views.BottomNavBar
 import by.dima00138.coursework.views.MainScreen
 import by.dima00138.coursework.views.TopBar
+import com.google.firebase.FirebaseApp
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.HiltAndroidApp
 
+@HiltAndroidApp
+class CourseWork : Application()
+
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val windowInsetsController =
-            WindowCompat.getInsetsController(window, window.decorView)
         setContent {
             CourseWorkTheme {
-            window.navigationBarColor = by.dima00138.coursework.ui.theme.NavBar.toArgb()
+            window.navigationBarColor = NavBar.toArgb()
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

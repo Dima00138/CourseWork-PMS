@@ -14,50 +14,63 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import by.dima00138.coursework.R
+import by.dima00138.coursework.ui.theme.PrimaryFancyButton
 import by.dima00138.coursework.ui.theme.FancyTextField
+import by.dima00138.coursework.viewModels.BoardVM
 import by.dima00138.coursework.viewModels.Inputs
 import by.dima00138.coursework.viewModels.MainVM
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun MainScreen(navController: NavController, viewModel: MainVM = viewModel()) {
+fun MainScreen(navController: NavController, viewModel: MainVM) {
     Surface (
         content = { MainScreenContent(viewModel) }
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenContent(viewModel: MainVM) {
-    val showList by viewModel.showList.observeAsState(false)
-    val input by viewModel.input.observeAsState(Inputs.None)
-    val searchText by viewModel.searchText.observeAsState("")
+    val showList by viewModel.showList.collectAsState(false)
+    val showDatePicker by viewModel.showDatePicker.collectAsState(false)
+    val datePick by viewModel.datePick.collectAsState(Inputs.None)
+    val input by viewModel.input.collectAsState(Inputs.None)
+    val searchText by viewModel.searchText.collectAsState("")
+    val whenDateState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+    val returnDateState = rememberDatePickerState(null)
+
 
     if (showList) {
         FullScreenList(
@@ -71,16 +84,56 @@ fun MainScreenContent(viewModel: MainVM) {
             onSearchTextChange = { newText -> viewModel.onSearchTextChange(newText) }
         )
     } else {
+        if (showDatePicker) {
+            val selectedDateState = when (datePick == Inputs.WhenDateInput) {
+                true -> whenDateState
+                false -> returnDateState
+            }
+            val confirmEnabled = remember {
+                derivedStateOf { selectedDateState.selectedDateMillis != null }
+            }
+            DatePickerDialog(onDismissRequest = {
+                viewModel.onShowDatePickerChange(false, Inputs.None)
+            }, confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onValueChange(
+                            datePick,
+                            selectedDateState.selectedDateMillis.toString()
+                        )
+                        viewModel.onShowDatePickerChange(false, Inputs.None)
+                    },
+                    enabled = confirmEnabled.value
+                ) {
+                    Text("OK")
+                }
+
+            },dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onShowDatePickerChange(false, Inputs.None)
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }) {
+                DatePicker(
+                    state = selectedDateState,
+                    showModeToggle = false,
+                )
+            }
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 stringResource(id = R.string.header_search),
                 style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp, 24.dp, 16.dp, 16.dp)
             )
             SearchForm(viewModel)
         }
@@ -89,10 +142,10 @@ fun MainScreenContent(viewModel: MainVM) {
 
 @Composable
 fun SearchForm(viewModel: MainVM) {
-    val from by viewModel.from.observeAsState("")
-    val to by viewModel.to.observeAsState("")
-    val whenDate by viewModel.whenDate.observeAsState(LocalDate.now())
-    val returnDate by viewModel.returnDate.observeAsState(null)
+    val from by viewModel.from.collectAsState("")
+    val to by viewModel.to.collectAsState("")
+    val whenDate by viewModel.whenDate.collectAsState(LocalDate.now())
+    val returnDate by viewModel.returnDate.collectAsState(null)
 
     Column(
         modifier = Modifier
@@ -117,7 +170,9 @@ fun SearchForm(viewModel: MainVM) {
             FancyTextField(
                 value = to,
                 onValueChange = { viewModel.onValueChange(Inputs.ToInput, it) },
-                modifier = Modifier.weight(1f).clickable { viewModel.onShowListChange(true, Inputs.ToInput) },
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { viewModel.onShowListChange(true, Inputs.ToInput) },
                 label = { Text(stringResource(id = R.string.where)) },
             )
 
@@ -128,7 +183,7 @@ fun SearchForm(viewModel: MainVM) {
                 viewModel.onValueChange(Inputs.FromInput, to)
                 viewModel.onValueChange(Inputs.ToInput, temp)
             }) {
-                Icon(Icons.Filled.Warning, contentDescription = "Менять местами")
+                Icon(painterResource(id = R.drawable.arrows_sort_icon), contentDescription = "Менять местами")
             }
         }
 
@@ -141,44 +196,31 @@ fun SearchForm(viewModel: MainVM) {
         ) {
             FancyTextField(
                 value = whenDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
-                onValueChange = {  },
-                label = { Text(stringResource(id = R.string.where)) },
-                modifier = Modifier.weight(1f),
+                onValueChange = { viewModel.onValueChange(Inputs.WhenDateInput, it) },
+                label = { Text(stringResource(id = R.string.`when`)) },
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { viewModel.onShowDatePickerChange(true, Inputs.WhenDateInput) },
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
             FancyTextField(
                 value = TextFieldValue(returnDate?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) ?: ""),
-                onValueChange = { /* Обработка изменения даты возвращения */ },
+                onValueChange = { viewModel.onValueChange(Inputs.ReturnDateInput, it.toString()) },
                 label = { Text(stringResource(id = R.string.back)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { viewModel.onShowDatePickerChange(true, Inputs.ReturnDateInput) },
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = { /* Обработка нажатия кнопки поиск */ },
-            shape = CutCornerShape(6.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-                disabledContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
-                disabledContentColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f)
-            ),
-            enabled = true
-        ) {
-            Text(
-                stringResource(id = R.string.search).uppercase(),
-                fontSize = 24.sp,
-                maxLines = 1,
-                fontWeight = FontWeight(1000),
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-                )
-        }
+        PrimaryFancyButton(
+            onClick = { /*Search Logic*/ },
+            text = stringResource(id = R.string.search)
+        )
     }
 }
 
@@ -196,10 +238,11 @@ fun FullScreenList(
                 TextField(
                     value = searchText,
                     onValueChange = onSearchTextChange,
+                    maxLines = 1,
                     label = { Text(stringResource(id = R.string.search)) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(8.dp)
                 )
             }
             items(items) { item ->
@@ -216,7 +259,7 @@ fun FullScreenList(
             onClick = onBackClick,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp)
+                .padding(10.dp)
         ) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back))
         }
