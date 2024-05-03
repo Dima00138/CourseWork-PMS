@@ -17,4 +17,10 @@
     <string name="web_client_id">299408633060-nkvf9h5q73ahco2l68557h13ormr9gp6.apps.googleusercontent.com</string>
     <string name="logout">Выход</string>
     <string name="submit">Отправить</string>
+    <string name="about">О приложении</string>
+    <string name="appDescription">Просматривай расписание и бронируй билеты онлайн</string>
+    <string name="admin_panel">Админ Панель</string>
+    <string name="passengers">Пассажиры</string>
+    <string name="messenges">Сообщения</string>
+    <string name="favorite">Избранное</string>
 </resources>

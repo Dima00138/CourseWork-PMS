@@ -18,4 +18,10 @@
     <string name="web_client_id">299408633060-nkvf9h5q73ahco2l68557h13ormr9gp6.apps.googleusercontent.com</string>
     <string name="logout">Logout</string>
     <string name="submit">Submit</string>
+    <string name="about">About</string>
+    <string name="appDescription">View timetable and purchase train tickers online</string>
+    <string name="admin_panel">Admin Panel</string>
+    <string name="passengers">Passengers</string>
+    <string name="messenges">Messenges</string>
+    <string name="favorite">Favorite</string>
 </resources>

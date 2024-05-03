@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation (libs.googleid)
     implementation(libs.hilt.android)
+    implementation (libs.kotlin.reflect)
     ksp(libs.hilt.android.compiler)
     ksp(libs.hilt.android.compiler.v2405)
     implementation (libs.androidx.material.icons.extended.android)

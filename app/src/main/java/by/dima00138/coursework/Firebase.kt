@@ -5,13 +5,15 @@ import android.content.Context
 import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import by.dima00138.coursework.Models.ScheduleItem
+import by.dima00138.coursework.Models.Station
+import by.dima00138.coursework.Models.User
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.firebase.Firebase
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.tasks.await
 import java.security.MessageDigest
@@ -20,7 +22,7 @@ import javax.inject.Inject
 
 class Firebase @Inject constructor(private var context: Context) {
     private val auth = FirebaseAuth.getInstance()
-    val db = Firebase.firestore
+    val db = FirebaseFirestore.getInstance()
 
     suspend fun createUserWithEmail(user : User, onCompleteListener: (AuthResult) -> Unit, onFailureListener: (Exception) -> Unit) {
         try {
@@ -46,8 +48,8 @@ class Firebase @Inject constructor(private var context: Context) {
     suspend fun signUpWithEmail(user : User, onCompleteListener: (AuthResult, User?) -> Unit, onFailureListener: (Exception) -> Unit) {
         try {
         val result = auth.signInWithEmailAndPassword(user.email, user.password).await()
-            val user = getUser()
-            onCompleteListener(result, user)
+            val us = getUser()
+            onCompleteListener(result, us)
         }
         catch (e : Exception) {
             onFailureListener(e)
@@ -110,7 +112,7 @@ class Firebase @Inject constructor(private var context: Context) {
                 uid = resultAuth.user!!.uid,
                 fullName = resultAuth.user!!.displayName.toString(),
                 email = resultAuth.user!!.email.toString(),
-                photoUrl = resultAuth.user!!.photoUrl.toString()
+                role = "user"
             )
             db.collection("users").document(resultAuth.user!!.uid).set(user)
             onCompleteListener(resultAuth)
@@ -133,6 +135,68 @@ class Firebase @Inject constructor(private var context: Context) {
         }
     }
 
+    suspend fun getStations() : List<Station>? {
+        val arr: MutableList<Station> = mutableListOf()
+        return try {
+            val documents = db.collection("stations").get().await()
+            for (doc in documents) {
+                arr.add(doc.toObject<Station>())
+            }
+            arr
+        } catch (e: Exception) {
+            Log.d("E", e.message.toString())
+            null
+        }
+    }
+
+    suspend fun getSchedule() : List<ScheduleItem>? {
+        val arr: MutableList<ScheduleItem> = mutableListOf()
+        return try {
+            val documents = db.collection("schedule").get().await()
+            for (doc in documents) {
+                arr.add(doc.toObject<ScheduleItem>())
+            }
+            arr
+        } catch (e: Exception) {
+            Log.d("D", e.message.toString())
+            null
+        }
+    }
+
+    suspend fun getSchedule(
+        direction: String,
+        station: Station
+    ) : List<ScheduleItem>? {
+        val arr: MutableList<ScheduleItem> = mutableListOf()
+        if (direction == "arrival") {
+            return try {
+                val documents = db.collection("schedule")
+                    .whereEqualTo("from", station.id).get().await()
+                for (doc in documents) {
+
+                    arr.add(doc.toObject<ScheduleItem>())
+                }
+                arr
+            } catch (e: Exception) {
+                Log.d("D", e.message.toString())
+                null
+            }
+        }else {
+            return try {
+                val documents = db.collection("schedule")
+                    .whereEqualTo("to", station.id).get().await()
+                for (doc in documents) {
+
+                    arr.add(doc.toObject<ScheduleItem>())
+                }
+                arr
+            } catch (e: Exception) {
+                Log.d("D", e.message.toString())
+                null
+            }
+        }
+    }
+
     suspend fun getUser() : User? = auth.currentUser?.run {
         try {
         val doc = db.collection("users").document(uid).get().await()
@@ -144,56 +208,8 @@ class Firebase @Inject constructor(private var context: Context) {
     }
 
 
-    data class BoardList(val id: Int) {}
-    data class User(var uid : String = "",
-                    val fullName: String = "",
-                    val passport: String = "",
-                    val birthdate: String = "",
-                    val email: String = "",
-                    val password: String = "",
-                    val photoUrl: String? = "" )
-
     data class GetCredentials(
         val credentialManager: CredentialManager,
         val request: GetCredentialRequest
     )
 }
-
-//class FirebasePagingSource(
-//    private val query: Query,
-//) : PagingSource<DocumentSnapshot, Firebase.BoardList>() {
-
-//    override suspend fun load(params: LoadParams<DocumentSnapshot>): LoadResult<DocumentSnapshot, Firebase.BoardList> {
-//        return try {
-//            val currentPage = params.key ?: query.get().await()
-//            val documents = currentPage.documents
-//
-//            val nextPage = if (documents.isNotEmpty()) {
-//                val lastVisibleDocument = documents[documents.size - 1]
-//                query.startAfter(lastVisibleDocument).get().await()
-//            } else {
-//                null
-//            }
-//
-//            val data = documents.map { document ->
-//                val yourProperty = document.getInt("id") ?: ""
-//                Firebase.BoardList(yourProperty)
-//            }
-//
-//            LoadResult.Page(
-//                data = data,
-//                prevKey = null,
-//                nextKey = nextPage?.documents?.get(nextPage.documents.size - 1)
-//            )
-//        } catch (e: Exception) {
-//            LoadResult.Error(e)
-//        }
-//    }
-
-//    override fun getRefreshKey(state: PagingState<DocumentSnapshot, Firebase.BoardList>): DocumentSnapshot? {
-//        return state.anchorPosition?.let { anchorPosition ->
-//            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
-//                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
-//        }
-//    }
-//}

@@ -1,7 +1,5 @@
 package by.dima00138.coursework.viewModels
 
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 enum class Inputs{
@@ -29,7 +26,8 @@ class MainVM @Inject constructor(
     var to = MutableStateFlow("")
     var whenDate = MutableStateFlow(LocalDate.now())
     var returnDate = MutableStateFlow<LocalDate?>(null)
-    val items = listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 1", "Item 2", "Item 3", "Item 4", "Item 5")
+    val items = listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 1", "Item 2", "Item 3", "Item 4", "Item 5",
+                        "Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 1", "Item 2", "Item 3", "Item 4", "Item 5")
 
     fun onShowListChange(state: Boolean, inputs : Inputs) {
         showList.value = state

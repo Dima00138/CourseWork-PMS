@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,13 +40,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import by.dima00138.coursework.R
-import by.dima00138.coursework.ui.theme.PrimaryFancyButton
 import by.dima00138.coursework.ui.theme.FancyTextField
-import by.dima00138.coursework.viewModels.BoardVM
+import by.dima00138.coursework.ui.theme.PrimaryFancyButton
 import by.dima00138.coursework.viewModels.Inputs
 import by.dima00138.coursework.viewModels.MainVM
 import java.time.LocalDate
@@ -238,7 +234,7 @@ fun FullScreenList(
                 TextField(
                     value = searchText,
                     onValueChange = onSearchTextChange,
-                    maxLines = 1,
+                    singleLine = true,
                     label = { Text(stringResource(id = R.string.search)) },
                     modifier = Modifier
                         .fillMaxWidth()

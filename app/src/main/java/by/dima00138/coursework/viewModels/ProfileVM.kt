@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import by.dima00138.coursework.Firebase
+import by.dima00138.coursework.Models.User
 import by.dima00138.coursework.sign_in.SignInState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -112,11 +113,11 @@ class ProfileVM @Inject constructor(
     }
 
     suspend fun onLogin(navController: NavHostController) {
-        val user = Firebase.User(email = email.value.text, password = password.value.text)
+        val user = User(email = email.value.text, password = password.value.text)
 
-        firebase.signUpWithEmail(user, {res, user ->
+        firebase.signUpWithEmail(user, {res, us ->
             _state.update { it.copy(
-                user = user,
+                user = us,
                 isSignInSuccessful = res.user != null,
                 signInError = null
             )
@@ -135,12 +136,13 @@ class ProfileVM @Inject constructor(
     suspend fun onRegistration(
         navController: NavHostController
     ) {
-        val user = Firebase.User(
+        val user = User(
             fullName = fullName.value.text,
             passport = passport.value.text,
             birthdate = birthdate.value.text,
             email = email.value.text,
-            password = password.value.text)
+            password = password.value.text,
+            role = "user")
         firebase.createUserWithEmail(user = user, { res ->
             resetState()
             navController.navigate(Screen.Login.route)
