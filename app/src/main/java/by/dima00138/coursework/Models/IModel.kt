@@ -4,6 +4,7 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.javaType
 
 interface IModel {
+    fun toFirebase() : Any
     fun getFields(): Map<String, Any> {
         return this::class.declaredMemberProperties.associate { prop ->
             prop.name to prop.returnType.javaType

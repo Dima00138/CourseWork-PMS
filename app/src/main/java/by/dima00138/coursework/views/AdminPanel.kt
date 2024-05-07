@@ -14,18 +14,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,24 +36,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import by.dima00138.coursework.Models.IModel
-import by.dima00138.coursework.Models.ScheduleItem
-import by.dima00138.coursework.Models.User
-import by.dima00138.coursework.ui.theme.FancyTextField
 import by.dima00138.coursework.ui.theme.GenericTable
 import by.dima00138.coursework.ui.theme.Triadic400
 import by.dima00138.coursework.viewModels.AdminPanelVM
 import by.dima00138.coursework.viewModels.Tables
+import kotlinx.coroutines.launch
 
 @Composable
 fun AdminPanelScreen(navController: NavController, viewModel: AdminPanelVM) {
     val selectedTable = viewModel.selectedTable.collectAsStateWithLifecycle()
     val tableData = viewModel.tableData.collectAsStateWithLifecycle()
     val columnNames: List<String> = viewModel.getExampleElement().getFields().keys.toList()
-    val countElement: Int = tableData.value[selectedTable.value]?.count() ?: 0
-    val countOfField: Int =
-        tableData.value[selectedTable.value]?.firstOrNull()?.getFields()?.count() ?: 0
+//    val countElement: Int = tableData.value[selectedTable.value]?.count() ?: 0
 
 //    LaunchedEffect(key1 = selectedTable) {
 //
@@ -65,33 +57,26 @@ fun AdminPanelScreen(navController: NavController, viewModel: AdminPanelVM) {
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(16.dp, 0.dp)
-
+            .padding(0.dp, 0.dp)
     ) {
 
         FancyTableDropdown(
             tableNames = tableData.value.keys.toList(),
             selectedTable = selectedTable.value,
             onTableSelected = { viewModel.onSelectedTable(it) })
-
         Spacer(modifier = Modifier.height(16.dp))
 
         GenericTable(
             columnNames = columnNames,
+            exampleItem = viewModel.getExampleElement(),
             onDelete = { item -> viewModel.onDeleteItem(selectedTable.value, item) },
+            onUpdate = {item, oldItem -> viewModel.viewModelScope.launch {
+                viewModel.onUpdateItem(selectedTable.value, item, oldItem)
+            }},
+            onCreate = {item -> viewModel.onCreateItem(selectedTable.value, item)},
             data = tableData.value[selectedTable.value] ?: emptyList(),
             getColumnValues = { item -> item.getAllFieldValues().values.toList() }
         )
-
-//        CrudTable(
-//            tableName = selectedTable.value.toString(),
-//            data = tableData.value[selectedTable.value] ?: emptyList(),
-//            onCreateItem = { item -> viewModel.onCreateItem(selectedTable.value, item) },
-//            onUpdateItem = { item, newItem ->
-//                viewModel.onUpdateItem(selectedTable.value, item, newItem)
-//            },
-//            onDeleteItem = { item -> viewModel.onDeleteItem(selectedTable.value, item) }
-//        )
     }
 }
 
@@ -183,109 +168,5 @@ private fun FancyTableDropdownItem(
                 color = if (isSelected) Color.White else Color.Black.copy(alpha = 0.8f)
             )
         )
-    }
-}
-
-@Composable
-private fun CrudTable(
-    tableName: String,
-    data: List<IModel>,
-    onCreateItem: (IModel) -> Unit,
-    onUpdateItem: (IModel, IModel) -> Unit,
-    onDeleteItem: (IModel) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Table header
-            data.forEachIndexed { index, item ->
-                FancyCrudTableRow(
-                    item = item,
-                    onUpdate = { newItem -> onUpdateItem(item, newItem) },
-                    onDelete = { onDeleteItem(item) }
-                )
-                if (index < data.lastIndex) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                var newItem by remember { mutableStateOf<IModel>(ScheduleItem()) }
-                if (data.firstOrNull() is ScheduleItem) {
-                    newItem = ScheduleItem()
-                    (data.firstOrNull() as ScheduleItem).getFields().forEach { (key, value) ->
-                        FancyTextField(
-                            value = newItem.getField(key).toString(),
-                            onValueChange = { newValue ->
-                                newItem = newItem.setField(key, newValue)
-                            },
-                            label = { Text("New $key") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                } else if (data.firstOrNull() is User) {
-                    newItem = User()
-                    (data.firstOrNull() as User).getFields().forEach { (key, value) ->
-                        FancyTextField(
-                            value = newItem.getField(key).toString(),
-                            onValueChange = { newValue ->
-                                newItem = newItem.setField(key, newValue)
-                            },
-                            label = { Text("New $key") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                }
-                Button(
-                    onClick = {
-                        onCreateItem(newItem)
-//                        newItem = Any()
-                    }
-                ) {
-                    Text("Create")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun FancyCrudTableRow(
-    item: IModel,
-    onUpdate: (IModel) -> Unit,
-    onDelete: () -> Unit = {},
-    isCreateRow: Boolean = false
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        FancyTextField(
-            enabled = true,
-            value = item.toString(),
-            onValueChange = { onUpdate(it as IModel) },
-            label = { Text("Item") },
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        if (!isCreateRow) {
-            IconButton(
-                onClick = onDelete
-            ) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete")
-            }
-        }
     }
 }
