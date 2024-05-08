@@ -1,5 +1,6 @@
 package by.dima00138.coursework.Models
 
+import java.lang.reflect.Type
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.javaType
 
@@ -15,6 +16,12 @@ interface IModel {
         val field = fields[key] ?: throw IllegalArgumentException("Field $key not found")
         field.isAccessible = true
         return field.get(this) ?: throw IllegalArgumentException("Field $key is null")
+    }
+
+    fun getTypeOfField(key: String): Type {
+        val fields = this::class.declaredMemberProperties.associateBy { it.name }
+        val field = fields[key] ?: throw IllegalArgumentException("Field $key not found")
+        return field.returnType.javaType
     }
 
     fun getAllFieldValues(): Map<String, Any?> {

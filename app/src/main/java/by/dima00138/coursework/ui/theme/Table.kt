@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package by.dima00138.coursework.ui.theme
 
 import android.annotation.SuppressLint
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -202,14 +205,28 @@ fun <T : IModel> EditGenericRow(
                     editItemValue = newValue
                     editItem.value?.setField(key, newValue)
                 }
-                FancyTextField(
-                    enabled = key != "id",
-                    value = editItemValue.toString(),
-                    onValueChange = { newValue ->
-                        editItemOnValueChange(newValue)
-                    },
-                    modifier = Modifier.width(preferSize)
-                )
+                if (key == "date" || key == "birthdate") {
+                    FancyTextField(
+                        enabled = true,
+                        value = editItemValue.toString().trim()
+                        ,
+                        onValueChange = { newValue ->
+                            editItemOnValueChange(newValue)
+                        },
+                        modifier = Modifier
+                            .width(preferSize)
+                    )
+                } else {
+                    FancyTextField(
+                        enabled = key != "id",
+                        value = editItemValue.toString(),
+                        onValueChange = { newValue ->
+                            editItemOnValueChange(newValue)
+                        },
+                        modifier = Modifier.width(preferSize)
+                    )
+
+                }
             }
         }
         item {

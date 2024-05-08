@@ -8,6 +8,8 @@ import androidx.credentials.GetCredentialRequest
 import by.dima00138.coursework.Models.IModel
 import by.dima00138.coursework.Models.ScheduleItem
 import by.dima00138.coursework.Models.Station
+import by.dima00138.coursework.Models.Ticket
+import by.dima00138.coursework.Models.Train
 import by.dima00138.coursework.Models.User
 import by.dima00138.coursework.viewModels.Tables
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -21,17 +23,22 @@ import kotlinx.coroutines.tasks.await
 import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
 
 class Firebase @Inject constructor(private var context: Context) {
     private val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
-    suspend fun createUserWithEmail(user : User, onCompleteListener: (AuthResult) -> Unit, onFailureListener: (Exception) -> Unit) {
+    suspend fun createUserWithEmail(
+        user: User,
+        onCompleteListener: (AuthResult) -> Unit,
+        onFailureListener: (Exception) -> Unit
+    ) {
         try {
             val result = auth.createUserWithEmailAndPassword(user.email, user.password).await()
-            user.id =result.user!!.uid
+            user.id = result.user!!.uid
             db.collection("users").document(result.user!!.uid)
                 .set(user.toFirebase())
             onCompleteListener(result)
@@ -49,20 +56,23 @@ class Firebase @Inject constructor(private var context: Context) {
     }
 
     @SuppressLint("SuspiciousIndentation")
-    suspend fun signUpWithEmail(user : User, onCompleteListener: (AuthResult, User?) -> Unit, onFailureListener: (Exception) -> Unit) {
+    suspend fun signUpWithEmail(
+        user: User,
+        onCompleteListener: (AuthResult, User?) -> Unit,
+        onFailureListener: (Exception) -> Unit
+    ) {
         try {
-        val result = auth.signInWithEmailAndPassword(user.email, user.password).await()
+            val result = auth.signInWithEmailAndPassword(user.email, user.password).await()
             val us = getUser()
             onCompleteListener(result, us)
-        }
-        catch (e : Exception) {
+        } catch (e: Exception) {
             onFailureListener(e)
             Log.d("Error", "signInEmail")
             Log.d("Error", e.message.toString())
         }
     }
 
-/*    suspend fun signInWithGithub(activity: Activity, onCompleteListener: (AuthResult) -> Unit, onFailureListener: (Exception) -> Unit) {
+    /*    suspend fun signInWithGithub(activity: Activity, onCompleteListener: (AuthResult) -> Unit, onFailureListener: (Exception) -> Unit) {
         val provider = OAuthProvider.newBuilder("github.com")
 
         try{
@@ -76,7 +86,7 @@ class Firebase @Inject constructor(private var context: Context) {
         }
     }*/
 
-    fun getCredentials(context: Context) : GetCredentials {
+    fun getCredentials(context: Context): GetCredentials {
         val credentialManager = CredentialManager.create(context)
         val rawNonce = UUID.randomUUID().toString()
         val md = MessageDigest.getInstance("SHA-256")
@@ -101,7 +111,8 @@ class Firebase @Inject constructor(private var context: Context) {
         credentialManager: CredentialManager,
         request: GetCredentialRequest,
         onCompleteListener: (AuthResult) -> Unit,
-        onFailureListener: (Exception) -> Unit) {
+        onFailureListener: (Exception) -> Unit
+    ) {
         try {
             val result = credentialManager.getCredential(
                 request = request,
@@ -127,6 +138,7 @@ class Firebase @Inject constructor(private var context: Context) {
             Log.d("Error", e.message.toString())
         }
     }
+
     suspend fun logout(onCompleteListener: () -> Unit, authStateListener: (Exception) -> Unit) {
         try {
             val result = auth.signOut()
@@ -138,9 +150,11 @@ class Firebase @Inject constructor(private var context: Context) {
             Log.d("Error", e.message.toString())
         }
     }
-    fun createOrReplaceItem(table : Tables, item: IModel) {
+
+    fun createOrReplaceItem(table: Tables, item: IModel) {
         try {
-            db.collection(table.str.lowercase()).document(item.getField("id").toString()).set(item.toFirebase())
+            db.collection(table.str.lowercase()).document(item.getField("id").toString())
+                .set(item.toFirebase())
         } catch (e: Exception) {
             Log.d("D", e.message.toString())
         }
@@ -160,17 +174,50 @@ class Firebase @Inject constructor(private var context: Context) {
         }
     }
 
+    suspend fun getTrains(): List<Train>? {
+        val arr: MutableList<Train> = mutableListOf()
+        return try {
+            val documents = db.collection("trains").get().await()
+            for (doc in documents) {
+                arr.add(doc.toObject<Train>())
+            }
+            arr
+        } catch (e: Exception) {
+            Log.d("E", e.message.toString())
+            null
+        }
+    }
 
-    suspend fun getSchedule() : List<ScheduleItem>? {
+    suspend fun getTickets(): List<Ticket>? {
+        val arr: MutableList<Ticket> = mutableListOf()
+        return try {
+            val documents = db.collection("tickets").get().await()
+            for (doc in documents) {
+                arr.add(doc.toObject<Ticket>())
+            }
+            arr
+        } catch (e: Exception) {
+            Log.d("E", e.message.toString())
+            null
+        }
+    }
+
+
+    suspend fun getSchedule(): List<ScheduleItem>? {
         val arr: MutableList<ScheduleItem> = mutableListOf()
         return try {
             val documents = db.collection("schedule").get().await()
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
             for (doc in documents) {
                 val item = ScheduleItem(
                     id = doc["id"].toString(),
-                    from = doc["id"].toString(),
+                    from = doc["from"].toString(),
                     to = doc["to"].toString(),
-                    date = LocalDateTime.ofEpochSecond(doc["date"].toString().toLong() ,0, ZoneOffset.UTC)
+                    date = LocalDateTime.ofEpochSecond(
+                        doc["date"].toString().toLong(),
+                        0,
+                        ZoneOffset.UTC
+                    ).format(formatter)
                 )
                 arr.add(item)
             }
@@ -184,34 +231,33 @@ class Firebase @Inject constructor(private var context: Context) {
     suspend fun getSchedule(
         direction: String,
         station: Station
-    ) : List<ScheduleItem>? {
+    ): List<ScheduleItem>? {
         val arr: MutableList<ScheduleItem> = mutableListOf()
-        if (direction == "arrival") {
-            return try {
-                val documents = db.collection("schedule")
-                    .whereEqualTo("from", station.id).get().await()
-                for (doc in documents) {
-
-                    arr.add(doc.toObject<ScheduleItem>())
-                }
-                arr
-            } catch (e: Exception) {
-                Log.d("D", e.message.toString())
-                null
+        val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+        val equal = when (direction) {
+            "arrival" -> "from"
+            else -> "to"
+        }
+        return try {
+            val documents = db.collection("schedule")
+                .whereEqualTo(equal, station.id).get().await()
+            for (doc in documents) {
+                val item = ScheduleItem(
+                    id = doc["id"].toString(),
+                    from = doc["from"].toString(),
+                    to = doc["to"].toString(),
+                    date = LocalDateTime.ofEpochSecond(
+                        doc["date"].toString().toLong(),
+                        0,
+                        ZoneOffset.UTC
+                    ).format(formatter)
+                )
+                arr.add(item)
             }
-        }else {
-            return try {
-                val documents = db.collection("schedule")
-                    .whereEqualTo("to", station.id).get().await()
-                for (doc in documents) {
-
-                    arr.add(doc.toObject<ScheduleItem>())
-                }
-                arr
-            } catch (e: Exception) {
-                Log.d("D", e.message.toString())
-                null
-            }
+            arr
+        } catch (e: Exception) {
+            Log.d("D", e.message.toString())
+            null
         }
     }
 
