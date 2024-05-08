@@ -24,4 +24,5 @@
     <string name="passengers">Passengers</string>
     <string name="messenges">Messenges</string>
     <string name="favorite">Favorite</string>
+    <string name="board_empty">Board is empty</string>
 </resources>

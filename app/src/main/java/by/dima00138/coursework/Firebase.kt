@@ -239,13 +239,23 @@ class Firebase @Inject constructor(private var context: Context) {
             else -> "to"
         }
         return try {
-            val documents = db.collection("schedule")
+            val documentsSchedule = db.collection("schedule")
                 .whereEqualTo(equal, station.id).get().await()
-            for (doc in documents) {
+
+            val stationMap = mutableMapOf<String, Station>()
+            val documentsStations = db.collection("stations")
+                .whereIn("id", documentsSchedule.map { it["to"].toString() } + documentsSchedule.map { it["from"].toString() }).get().await()
+            for (st in documentsStations) {
+                stationMap[st.id] = st.toObject<Station>()
+            }
+
+            for (doc in documentsSchedule) {
+                val fromStation = stationMap[doc["from"].toString()]
+                val toStation = stationMap[doc["to"].toString()]
                 val item = ScheduleItem(
                     id = doc["id"].toString(),
-                    from = doc["from"].toString(),
-                    to = doc["to"].toString(),
+                    from = fromStation?.name ?: doc["from"].toString(),
+                    to = toStation?.name ?: doc["to"].toString(),
                     date = LocalDateTime.ofEpochSecond(
                         doc["date"].toString().toLong(),
                         0,

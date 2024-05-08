@@ -40,7 +40,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import by.dima00138.coursework.Models.Station
 import by.dima00138.coursework.R
 import by.dima00138.coursework.ui.theme.FancyTextField
 import by.dima00138.coursework.ui.theme.PrimaryFancyButton
@@ -52,25 +54,26 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MainScreen(navController: NavController, viewModel: MainVM) {
     Surface (
-        content = { MainScreenContent(viewModel) }
+        content = { MainScreenContent(navController, viewModel) }
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreenContent(viewModel: MainVM) {
-    val showList by viewModel.showList.collectAsState(false)
-    val showDatePicker by viewModel.showDatePicker.collectAsState(false)
-    val datePick by viewModel.datePick.collectAsState(Inputs.None)
-    val input by viewModel.input.collectAsState(Inputs.None)
-    val searchText by viewModel.searchText.collectAsState("")
+fun MainScreenContent(navController: NavController, viewModel: MainVM) {
+    val showList by viewModel.showList.collectAsStateWithLifecycle(false)
+    val showDatePicker by viewModel.showDatePicker.collectAsStateWithLifecycle(false)
+    val datePick by viewModel.datePick.collectAsStateWithLifecycle(Inputs.None)
+    val input by viewModel.input.collectAsStateWithLifecycle(Inputs.None)
+    val searchText by viewModel.searchText.collectAsStateWithLifecycle("")
     val whenDateState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
     val returnDateState = rememberDatePickerState(null)
+    val stations = viewModel.stations.collectAsStateWithLifecycle()
 
 
     if (showList) {
         FullScreenList(
-            items = viewModel.items.filter { it.contains(searchText, ignoreCase = true) },
+            items = stations.value.filter{ it.name.contains(searchText, ignoreCase = true) },
             onItemClick = { item ->
                 viewModel.onValueChange(input, item)
                 viewModel.onShowListChange(false, Inputs.None)
@@ -131,13 +134,13 @@ fun MainScreenContent(viewModel: MainVM) {
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.padding(16.dp, 24.dp, 16.dp, 16.dp)
             )
-            SearchForm(viewModel)
+            SearchForm(navController, viewModel)
         }
     }
 }
 
 @Composable
-fun SearchForm(viewModel: MainVM) {
+fun SearchForm(navController: NavController, viewModel: MainVM) {
     val from by viewModel.from.collectAsState("")
     val to by viewModel.to.collectAsState("")
     val whenDate by viewModel.whenDate.collectAsState(LocalDate.now())
@@ -214,7 +217,7 @@ fun SearchForm(viewModel: MainVM) {
         Spacer(modifier = Modifier.height(16.dp))
 
         PrimaryFancyButton(
-            onClick = { /*Search Logic*/ },
+            onClick = { viewModel.onSearchButtonClick(navController) },
             text = stringResource(id = R.string.search)
         )
     }
@@ -222,7 +225,7 @@ fun SearchForm(viewModel: MainVM) {
 
 @Composable
 fun FullScreenList(
-    items: List<String>,
+    items: List<Station>,
     onItemClick: (String) -> Unit,
     onBackClick: () -> Unit,
     searchText: String,
@@ -243,10 +246,10 @@ fun FullScreenList(
             }
             items(items) { item ->
                 Text(
-                    text = item,
+                    text = item.name,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onItemClick(item) }
+                        .clickable { onItemClick(item.name) }
                         .padding(16.dp)
                 )
             }
