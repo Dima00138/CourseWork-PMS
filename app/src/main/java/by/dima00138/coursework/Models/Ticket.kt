@@ -3,13 +3,15 @@ package by.dima00138.coursework.Models
 data class Ticket(
     val id: String = "",
     val train: String = "",
-    val isFree: String = "true",
+    val numberOfSeat: String = "",
+    var free: String = "true",
 ) : IModel {
     override fun toFirebase(): Any {
         return TicketFirebase(
             id = id,
             train = train,
-            isFree = isFree
+            numberOfSeat = numberOfSeat,
+            free = free
         )
     }
 }
@@ -17,5 +19,6 @@ data class Ticket(
 data class TicketFirebase(
     val id: String = "",
     val train: String = "",
-    val isFree: String = "true",
+    val numberOfSeat: String = "",
+    val free: String = "true",
 )

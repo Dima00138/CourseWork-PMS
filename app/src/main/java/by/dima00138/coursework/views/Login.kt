@@ -1,6 +1,7 @@
 package by.dima00138.coursework.views
 
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -29,6 +31,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import by.dima00138.coursework.R
 import by.dima00138.coursework.ui.theme.FancyTextField
+import by.dima00138.coursework.ui.theme.LoadingIndicator
 import by.dima00138.coursework.ui.theme.PrimaryFancyButton
 import by.dima00138.coursework.ui.theme.SecondaryFancyButton
 import by.dima00138.coursework.viewModels.ProfileVM
@@ -41,6 +44,8 @@ fun LoginScreen(navController: NavHostController, viewModel: ProfileVM) {
     val state = viewModel.state.collectAsStateWithLifecycle()
     val email = viewModel.email.collectAsStateWithLifecycle(TextFieldValue())
     val password = viewModel.password.collectAsStateWithLifecycle(TextFieldValue())
+    val error = viewModel.error.collectAsStateWithLifecycle()
+    val isRefresh = viewModel.isRefresh.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = state.value.user) {
         if (state.value.user != null) {
@@ -62,21 +67,23 @@ fun LoginScreen(navController: NavHostController, viewModel: ProfileVM) {
         }
     }
 
+    if (isRefresh.value) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            LoadingIndicator()
+        }
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp, 0.dp)
             .verticalScroll(rememberScrollState())
     ) {
-//        Text(
-//            stringResource(id = R.string.login),
-//            style = MaterialTheme.typography.headlineLarge,
-//            textAlign = TextAlign.Center,
-//            modifier = Modifier
-//                .padding(16.dp, 24.dp, 16.dp, 8.dp)
-//                .fillMaxSize()
-//        )
-        Text(text = "Email", Modifier.padding(0.dp, 24.dp, 0.dp, 0.dp))
+        Text(text = stringResource(id = R.string.email), Modifier.padding(0.dp, 24.dp, 0.dp, 0.dp))
         FancyTextField(
             value = email.value,
             enabled = true,
@@ -84,7 +91,7 @@ fun LoginScreen(navController: NavHostController, viewModel: ProfileVM) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Text(text = "Password")
+        Text(text = stringResource(id = R.string.password))
         FancyTextField(
             value = password.value,
             enabled = true,
@@ -92,6 +99,14 @@ fun LoginScreen(navController: NavHostController, viewModel: ProfileVM) {
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
+
+        if (error.value) {
+            Text(
+                text = stringResource(id = R.string.login_error),
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
 
         PrimaryFancyButton(
             modifier = Modifier.padding(20.dp, 16.dp),

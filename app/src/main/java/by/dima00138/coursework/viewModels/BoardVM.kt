@@ -4,10 +4,10 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import by.dima00138.coursework.Firebase
 import by.dima00138.coursework.Models.ScheduleItem
 import by.dima00138.coursework.Models.Station
 import by.dima00138.coursework.R
+import by.dima00138.coursework.services.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,9 +24,11 @@ class BoardVM @Inject constructor(
     val tabs = listOf(TabsBoard.Departure, TabsBoard.Arrival)
     val departureSchedule = MutableStateFlow<List<ScheduleItem>?>(null)
     val arrivalSchedule = MutableStateFlow<List<ScheduleItem>?>(null)
-    val currentPage = MutableStateFlow<Int>(0)
+    val currentPage = MutableStateFlow(0)
+    val isRefresh = MutableStateFlow(false)
 
     init {
+        isRefresh.update { true }
             viewModelScope.launch {
             station.update {
                 firebase.getStations()?.get(0)
@@ -38,11 +40,24 @@ class BoardVM @Inject constructor(
                 station.value?.let { it1 -> firebase.getSchedule("arrival", it1) }
             }
         }
+        isRefresh.update { false }
     }
 
     fun onSelectedTabChange(state : Int) {
-        selectedTabIndex.update { state }
-        currentPage.update { 0 }
+        isRefresh.update { true }
+        viewModelScope.launch {
+            selectedTabIndex.update { state }
+            when (state) {
+                0 -> departureSchedule.update {
+                    station.value?.let { it1 -> firebase.getSchedule("departure", it1) }
+                }
+                1 -> arrivalSchedule.update {
+                    station.value?.let { it1 -> firebase.getSchedule("arrival", it1) }
+                }
+            }
+            currentPage.update { 0 }
+        }
+        isRefresh.update { false }
     }
 
     fun onCurrentPageChange(state: Int) {

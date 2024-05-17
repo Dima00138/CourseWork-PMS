@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.ButtonDefaults
@@ -32,9 +34,10 @@ import by.dima00138.coursework.viewModels.Screen
 
 @Composable
 fun MoreScreen(navController: NavController) {
-    Column(Modifier
-        .fillMaxWidth()
-        .padding(16.dp, 0.dp)) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(16.dp, 0.dp)) {
         FancyButton(
             modifier = Modifier.padding(0.dp, 24.dp),
             text = stringResource(id = R.string.about),
@@ -47,7 +50,7 @@ fun MoreScreen(navController: NavController) {
 
 @Composable
 fun AboutScreen(navController: NavController) {
-    val appVersion = "0.2"
+    val appVersion = "1.0"
     val appName = "Railway App"
     val appDescription = stringResource(id = R.string.appDescription)
     Box(
@@ -56,9 +59,11 @@ fun AboutScreen(navController: NavController) {
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.icon),

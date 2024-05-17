@@ -5,7 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import by.dima00138.coursework.Firebase
+import by.dima00138.coursework.R
+import by.dima00138.coursework.services.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -32,7 +33,19 @@ class TopBarVM @Inject constructor(
                 title.update {
                     name
                 }
-            } else {
+            }else if (route == Screen.SearchResult.route) {
+                title.update {
+                    firebase.context.getString(R.string.search_result)
+                }
+            }else if (route == Screen.Board.route) {
+                title.update {
+                    firebase.getStations()?.get(0)?.name ?: route.toString()
+                }
+            }else if (route == Screen.Ticket.route + "{ticket}") {
+                title.update {
+                    firebase.context.getString(R.string.book_ticket)
+                }
+            }else {
                 title.update {
                     route.toString()
                 }

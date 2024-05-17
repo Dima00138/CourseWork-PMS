@@ -4,13 +4,13 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import by.dima00138.coursework.Firebase
 import by.dima00138.coursework.Models.IModel
 import by.dima00138.coursework.Models.ScheduleItem
 import by.dima00138.coursework.Models.Station
 import by.dima00138.coursework.Models.Ticket
 import by.dima00138.coursework.Models.Train
 import by.dima00138.coursework.Models.User
+import by.dima00138.coursework.services.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,21 +36,6 @@ class AdminPanelVM @Inject constructor(
 ) : ViewModel() {
     private var user : User? = null
 
-    init {
-        viewModelScope.launch {
-            user = firebase.getUser()
-
-            _tableData.update {
-                mutableMapOf(
-                    Tables.Users to (firebase.getUsers() ?: emptyList()),
-                    Tables.Stations to (firebase.getStations() ?: emptyList()),
-                    Tables.Schedule to (firebase.getSchedule() ?: emptyList()),
-                    Tables.Trains to (firebase.getTrains() ?: emptyList()),
-                    Tables.Tickets to (firebase.getTickets() ?: emptyList()),
-                )
-            }
-        }
-    }
     private val _tableData = MutableStateFlow<Map<Tables, List<IModel>>>(
         mutableMapOf(
             Tables.Users to listOf(),
@@ -61,7 +46,32 @@ class AdminPanelVM @Inject constructor(
         )
     )
     val tableData: StateFlow<Map<Tables, List<IModel>>> = _tableData
-    val selectedTable = MutableStateFlow(Tables.Stations)
+    val selectedTable = MutableStateFlow(Tables.Users)
+
+    init {
+        viewModelScope.launch {
+            user = firebase.getUser()
+
+            if ((user?.role ?: "") == "manager") {
+                _tableData.update {
+                    mutableMapOf(
+                        Tables.Users to (firebase.getUsers() ?: emptyList()),
+                        Tables.Tickets to (firebase.getTickets() ?: emptyList()),
+                    )
+                }
+            }else {
+                _tableData.update {
+                    mutableMapOf(
+                        Tables.Users to (firebase.getUsers() ?: emptyList()),
+                        Tables.Stations to (firebase.getStations() ?: emptyList()),
+                        Tables.Schedule to (firebase.getSchedule() ?: emptyList()),
+                        Tables.Trains to (firebase.getTrains() ?: emptyList()),
+                        Tables.Tickets to (firebase.getTickets() ?: emptyList()),
+                    )
+                }
+            }
+        }
+    }
 
     fun onSelectedTable(state: Tables) {
         viewModelScope.launch {
@@ -109,7 +119,8 @@ class AdminPanelVM @Inject constructor(
                         val ticket = Ticket(
                             id = UUID.randomUUID().toString(),
                             train = id,
-                            isFree = "true"
+                            numberOfSeat = i.toString(),
+                            free = "true"
                         )
                         firebase.createOrReplaceItem(Tables.Tickets, ticket)
                         i++
@@ -153,6 +164,7 @@ class AdminPanelVM @Inject constructor(
         _tableData.update { currentData ->
             var updatedData = currentData.toMutableMap()
             val updatedList = currentData[tableName]?.toMutableList()
+            firebase.deleteItem(tableName, item)
             updatedList?.remove(item)
             updatedData = updatedData.toMutableMap().apply {
                 set(tableName, updatedList ?: emptyList<IModel>())

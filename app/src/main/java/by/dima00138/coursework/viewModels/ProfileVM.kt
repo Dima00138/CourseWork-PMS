@@ -6,9 +6,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import by.dima00138.coursework.Firebase
 import by.dima00138.coursework.Models.User
+import by.dima00138.coursework.R
+import by.dima00138.coursework.services.Firebase
+import by.dima00138.coursework.services.Validator
 import by.dima00138.coursework.sign_in.SignInState
+import com.google.firebase.firestore.toObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,8 +26,12 @@ class ProfileVM @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(SignInState())
     val state = _state.asStateFlow()
+    val error = MutableStateFlow(false)
+    val validator = Validator()
+    val isRefresh = MutableStateFlow(false)
 
     init {
+        isRefresh.update { true }
         viewModelScope.launch {
             val user = firebase.getUser()
             _state.update {
@@ -35,6 +42,7 @@ class ProfileVM @Inject constructor(
                 )
             }
         }
+        isRefresh.update { false }
     }
 
     val fullName = MutableStateFlow(TextFieldValue())
@@ -78,15 +86,15 @@ class ProfileVM @Inject constructor(
 //    }
 
     fun signInGoogle(context : Context) {
+        isRefresh.update { true }
 
         val getCredentials = firebase.getCredentials(context)
 
         viewModelScope.launch {
-            val user = firebase.getUser()
             firebase.signUpWithCredentials(context, getCredentials.credentialManager,
-                getCredentials.request, {AR ->
-                _state.update {it.copy(
-                    user = user,
+                getCredentials.request, {doc ->
+                    _state.update {it.copy(
+                    user = doc.toObject<User>(),
                     isSignInSuccessful = true,
                     signInError = null
                 )
@@ -100,6 +108,7 @@ class ProfileVM @Inject constructor(
                 }
             }
         }
+        isRefresh.update { false }
     }
 
     fun resetState() {
@@ -113,9 +122,11 @@ class ProfileVM @Inject constructor(
     }
 
     suspend fun onLogin(navController: NavHostController) {
+        isRefresh.update { true }
         val user = User(email = email.value.text, password = password.value.text)
 
         firebase.signUpWithEmail(user, {res, us ->
+            error.update { false }
             _state.update { it.copy(
                 user = us,
                 isSignInSuccessful = res.user != null,
@@ -124,6 +135,7 @@ class ProfileVM @Inject constructor(
             }
             navController.navigate(Screen.Profile.route)
         }) {e ->
+            error.update { true }
             _state.update { it.copy(
                     user = null,
                     isSignInSuccessful = false,
@@ -131,11 +143,13 @@ class ProfileVM @Inject constructor(
                 )
             }
         }
+        isRefresh.update { false }
     }
 
     suspend fun onRegistration(
         navController: NavHostController
     ) {
+        isRefresh.update { true }
         val user = User(
             fullName = fullName.value.text,
             passport = passport.value.text,
@@ -143,6 +157,16 @@ class ProfileVM @Inject constructor(
             email = email.value.text,
             password = password.value.text,
             role = "user")
+        if (!validator.validRegistration(user)) {
+            _state.update {
+                it.copy(
+                    user = null,
+                    isSignInSuccessful = false,
+                    signInError = firebase.context.getString(R.string.user_invalid)
+                )
+            }
+            return
+        }
         firebase.createUserWithEmail(user = user, { res ->
             resetState()
             navController.navigate(Screen.Login.route)
@@ -155,6 +179,7 @@ class ProfileVM @Inject constructor(
                 )
             }
         }
+        isRefresh.update { false }
     }
 
     suspend fun onLogOut(navController: NavHostController) {

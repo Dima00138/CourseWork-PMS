@@ -11,8 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.Composable
@@ -38,10 +36,7 @@ fun ProfileScreen(navController: NavHostController, viewModel: ProfileVM) {
 
     LaunchedEffect(key1 = state.value.user) {
         if (state.value.user == null) {
-            navController.navigate(Screen.Login.route) {
-                popUpTo(navController.graph.findStartDestination().id)
-                launchSingleTop = true
-            }
+            navController.navigate(Screen.Login.route)
 
         }
     }
@@ -63,10 +58,13 @@ fun ProfileScreen(navController: NavHostController, viewModel: ProfileVM) {
         FancyButtonList(
             isAdmin = (state.value.user?.role  == "admin") || (state.value.user?.role == "manager"),
             onOrdersClicked = {
-                navController.navigate(Screen.Orders.route) {
+                navController.navigate(Screen.Orders.route)  {
                     popUpTo(navController.graph.findStartDestination().id)
                     launchSingleTop = true
                 }
+            },
+            onPassengersClicked = {
+                navController.navigate(Screen.Passenger.route)
             },
             onLogoutClicked = {
                 viewModel.viewModelScope.launch {
@@ -74,10 +72,7 @@ fun ProfileScreen(navController: NavHostController, viewModel: ProfileVM) {
                 }
             },
             onAdminClicked = {
-                navController.navigate(Screen.AdminPanel.route) {
-                    popUpTo(navController.graph.findStartDestination().id)
-                    launchSingleTop = true
-                }
+                navController.navigate(Screen.AdminPanel.route)
             }
         )
     }
@@ -110,16 +105,16 @@ fun FancyButtonList(
             icon = Icons.Filled.PeopleAlt,
             onClick = onPassengersClicked
         )
-        FancyButton(
-            text = stringResource(id = R.string.favorite),
-            icon = Icons.Filled.Favorite,
-            onClick = onFavoritesClicked
-        )
-        FancyButton(
-            text = stringResource(id = R.string.messenges),
-            icon = Icons.Filled.Email,
-            onClick = onMessagesClicked
-        )
+//        FancyButton(
+//            text = stringResource(id = R.string.favorite),
+//            icon = Icons.Filled.Favorite,
+//            onClick = onFavoritesClicked
+//        )
+//        FancyButton(
+//            text = stringResource(id = R.string.messenges),
+//            icon = Icons.Filled.Email,
+//            onClick = onMessagesClicked
+//        )
         if (isAdmin) {
             FancyButton(
                 text = stringResource(id = R.string.admin_panel),

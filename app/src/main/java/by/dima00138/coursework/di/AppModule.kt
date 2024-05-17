@@ -1,7 +1,7 @@
 package by.dima00138.coursework.di
 
 import android.content.Context
-import by.dima00138.coursework.Firebase
+import by.dima00138.coursework.services.Firebase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

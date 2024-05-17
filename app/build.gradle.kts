@@ -53,6 +53,8 @@ android {
 }
 
 dependencies {
+    implementation (libs.zxing.core)
+    implementation (libs.zxing.android.embedded)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation (libs.googleid)

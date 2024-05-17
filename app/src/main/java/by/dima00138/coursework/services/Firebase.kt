@@ -1,4 +1,4 @@
-package by.dima00138.coursework
+package by.dima00138.coursework.services
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -11,14 +11,20 @@ import by.dima00138.coursework.Models.Station
 import by.dima00138.coursework.Models.Ticket
 import by.dima00138.coursework.Models.Train
 import by.dima00138.coursework.Models.User
+import by.dima00138.coursework.R
+import by.dima00138.coursework.viewModels.OrderVM
 import by.dima00138.coursework.viewModels.Tables
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.tasks.await
 import java.security.MessageDigest
 import java.time.LocalDateTime
@@ -27,9 +33,10 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
 
-class Firebase @Inject constructor(private var context: Context) {
+class Firebase @Inject constructor(val context: Context) {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
+    private val user = MutableStateFlow<User?>(null)
 
     suspend fun createUserWithEmail(
         user: User,
@@ -39,6 +46,7 @@ class Firebase @Inject constructor(private var context: Context) {
         try {
             val result = auth.createUserWithEmailAndPassword(user.email, user.password).await()
             user.id = result.user!!.uid
+            user.root = user.id
             db.collection("users").document(result.user!!.uid)
                 .set(user.toFirebase())
             onCompleteListener(result)
@@ -67,8 +75,8 @@ class Firebase @Inject constructor(private var context: Context) {
             onCompleteListener(result, us)
         } catch (e: Exception) {
             onFailureListener(e)
-            Log.d("Error", "signInEmail")
-            Log.d("Error", e.message.toString())
+            Log.e("Error", "signInEmail")
+            Log.e("Error", e.message.toString())
         }
     }
 
@@ -110,7 +118,7 @@ class Firebase @Inject constructor(private var context: Context) {
         context: Context,
         credentialManager: CredentialManager,
         request: GetCredentialRequest,
-        onCompleteListener: (AuthResult) -> Unit,
+        onCompleteListener: (DocumentSnapshot) -> Unit,
         onFailureListener: (Exception) -> Unit
     ) {
         try {
@@ -127,15 +135,20 @@ class Firebase @Inject constructor(private var context: Context) {
                 id = resultAuth.user!!.uid,
                 fullName = resultAuth.user!!.displayName.toString(),
                 email = resultAuth.user!!.email.toString(),
-                role = "user"
+                role = "user",
+                root = resultAuth.user!!.uid
             )
-            db.collection("users").document(resultAuth.user!!.uid).set(user.toFirebase())
-            onCompleteListener(resultAuth)
+            var doc = db.collection("users").document(user.id).get().await()
+            if (!doc.exists()) {
+                db.collection("users").document(user.id).set(user.toFirebase()).await()
+                doc = db.collection("users").document(user.id).get().await()
+            }
+            onCompleteListener(doc)
 
         } catch (e: Exception) {
             onFailureListener(e)
-            Log.d("Error", "signInGoogle")
-            Log.d("Error", e.message.toString())
+            Log.e("Error", "signInGoogle")
+            Log.e("Error", e.message.toString())
         }
     }
 
@@ -146,8 +159,8 @@ class Firebase @Inject constructor(private var context: Context) {
             Log.d("DEBUG", auth.currentUser.toString())
         } catch (e: Exception) {
             authStateListener(e)
-            Log.d("Error", "logout")
-            Log.d("Error", e.message.toString())
+            Log.e("Error", "logout")
+            Log.e("Error", e.message.toString())
         }
     }
 
@@ -156,7 +169,16 @@ class Firebase @Inject constructor(private var context: Context) {
             db.collection(table.str.lowercase()).document(item.getField("id").toString())
                 .set(item.toFirebase())
         } catch (e: Exception) {
-            Log.d("D", e.message.toString())
+            Log.e("E", e.message.toString())
+        }
+    }
+
+    fun deleteItem(table: Tables, item: IModel) {
+        try {
+            db.collection(table.str.lowercase()).document(item.getField("id").toString())
+                .delete()
+        } catch (e: Exception) {
+            Log.e("E", e.message.toString())
         }
     }
 
@@ -169,7 +191,7 @@ class Firebase @Inject constructor(private var context: Context) {
             }
             arr
         } catch (e: Exception) {
-            Log.d("E", e.message.toString())
+            Log.e("E", e.message.toString())
             null
         }
     }
@@ -183,7 +205,7 @@ class Firebase @Inject constructor(private var context: Context) {
             }
             arr
         } catch (e: Exception) {
-            Log.d("E", e.message.toString())
+            Log.e("E", e.message.toString())
             null
         }
     }
@@ -191,17 +213,71 @@ class Firebase @Inject constructor(private var context: Context) {
     suspend fun getTickets(): List<Ticket>? {
         val arr: MutableList<Ticket> = mutableListOf()
         return try {
-            val documents = db.collection("tickets").get().await()
+            val documents = db.collection("tickets").orderBy("train").orderBy("numberOfSeat").get().await()
             for (doc in documents) {
                 arr.add(doc.toObject<Ticket>())
             }
             arr
         } catch (e: Exception) {
-            Log.d("E", e.message.toString())
+            Log.e("E", e.message.toString())
             null
         }
     }
 
+    suspend fun getTicketsForScheduleItem(scheduleItemId: String) : Map<Train, List<Ticket>> {
+        val arr: MutableMap<Train, MutableList<Ticket>> = mutableMapOf()
+        var train = Train()
+        return try {
+            val documentsTrain = db.collection("trains").whereEqualTo("schedule", scheduleItemId).get().await()
+            for (doc1 in documentsTrain) {
+                train = doc1.toObject<Train>()
+                arr[train] = mutableListOf()
+                val documents = db.collection("tickets").whereEqualTo("train", train.id).orderBy("numberOfSeat").get().await()
+                for (doc in documents) {
+                    arr[train]?.add(doc.toObject<Ticket>())
+                }
+            }
+            arr
+        } catch (e: Exception) {
+            Log.e("E", e.message.toString())
+            emptyMap()
+        }
+    }
+
+    suspend fun getSearchSchedule(filter: Filter): List<ScheduleItem> {
+        val arr: MutableList<ScheduleItem> = mutableListOf()
+        return try {
+            val documents = db.collection("schedule").where(filter).orderBy("date").get().await()
+
+            val stationMap = mutableMapOf<String, Station>()
+            val documentsStations = db.collection("stations")
+                .whereIn("id", documents.map { it["to"].toString() } + documents.map { it["from"].toString() }).get().await()
+            for (st in documentsStations) {
+                stationMap[st.id] = st.toObject<Station>()
+            }
+
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+            for (doc in documents) {
+                val fromStation = stationMap[doc["from"].toString()]
+                val toStation = stationMap[doc["to"].toString()]
+                val item = ScheduleItem(
+                    id = doc["id"].toString(),
+                    from = fromStation?.name ?: doc["from"].toString(),
+                    to = toStation?.name ?: doc["to"].toString(),
+                    date = LocalDateTime.ofEpochSecond(
+                        doc["date"].toString().toLong(),
+                        0,
+                        ZoneOffset.UTC
+                    ).format(formatter)
+                )
+                arr.add(item)
+            }
+            arr
+        } catch (e: Exception) {
+            Log.e("Error", e.message.toString())
+            emptyList()
+        }
+    }
 
     suspend fun getSchedule(): List<ScheduleItem>? {
         val arr: MutableList<ScheduleItem> = mutableListOf()
@@ -235,8 +311,8 @@ class Firebase @Inject constructor(private var context: Context) {
         val arr: MutableList<ScheduleItem> = mutableListOf()
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
         val equal = when (direction) {
-            "arrival" -> "from"
-            else -> "to"
+            "arrival" -> "to"
+            else -> "from"
         }
         return try {
             val documentsSchedule = db.collection("schedule")
@@ -266,8 +342,99 @@ class Firebase @Inject constructor(private var context: Context) {
             }
             arr
         } catch (e: Exception) {
-            Log.d("D", e.message.toString())
+            Log.e("E", e.message.toString())
             null
+        }
+    }
+
+    suspend fun getFancyTickets(user: User) : List<OrderVM.FancyTicket> {
+        return try {
+            val arr : MutableList<OrderVM.FancyTicket> = mutableListOf()
+            val passengersId : MutableList<String> = mutableListOf()
+            val passengers: MutableList<User> = mutableListOf()
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+
+            val passengersDocs = db.collection("users")
+                .whereEqualTo("root", user.id).get().await()
+            for (pasDoc in passengersDocs) {
+                val u = pasDoc.toObject<User>()
+                passengers.add(u)
+                passengersId.add(u.id)
+            }
+
+            val ticketsDocs = db.collection("tickets")
+                .whereIn("free", passengersId).get().await()
+
+            for (ticketDoc in ticketsDocs) {
+                val ticket = ticketDoc.toObject(Ticket::class.java)
+                val train = db.collection("trains")
+                    .document(ticket.train).get().await().toObject<Train>()
+
+                val scheduleItemDoc = db.collection("schedule")
+                    .document(train?.schedule ?: "").get().await()
+                val scheduleItem = ScheduleItem(
+                    id = scheduleItemDoc["id"].toString(),
+                    from = scheduleItemDoc["from"].toString(),
+                    to = scheduleItemDoc["to"].toString(),
+                    date = LocalDateTime.ofEpochSecond(
+                        scheduleItemDoc["date"].toString().toLong(),
+                        0,
+                        ZoneOffset.UTC
+                    ).format(formatter)
+                )
+
+                val stationFrom = db.collection("stations")
+                    .document(scheduleItem.from).get().await()
+                    .toObject<Station>()
+
+                val stationTo = db.collection("stations")
+                    .document(scheduleItem.to).get().await()
+                    .toObject<Station>()
+
+                val fancyTicket = OrderVM.FancyTicket(
+                    id = ticket.id,
+                    trainId = ticket.train,
+                    from = stationFrom?.name ?: "",
+                    to = stationTo?.name ?: "",
+                    date = scheduleItem.date,
+                    user = passengers.first { it.id == ticket.free },
+                    numberOfSeat = ticket.numberOfSeat
+                )
+                arr.add(fancyTicket)
+            }
+            arr.sortBy { LocalDateTime.parse(it.date, formatter).toEpochSecond(ZoneOffset.UTC)  }
+            arr
+        }catch (e: Exception) {
+            Log.e("E", e.message.toString())
+            emptyList()
+        }
+    }
+
+    suspend fun getUsersWithRoot(root: String) : List<User>? {
+        val arr: MutableList<User> = mutableListOf()
+        return try {
+            val documents = db.collection("users").whereEqualTo("root", root).get().await()
+            for (doc in documents) {
+                arr.add(doc.toObject<User>())
+            }
+            arr
+        } catch (e: Exception) {
+            Log.e("e", e.message.toString())
+            null
+        }
+    }
+
+    suspend fun getPassengers(userId: String) : List<User> {
+        val arr: MutableList<User> = mutableListOf()
+        return try {
+            val documents = db.collection("users").whereEqualTo("root", userId).get().await()
+            for (doc in documents) {
+                arr.add(doc.toObject<User>())
+            }
+            arr
+        } catch (e: Exception) {
+            Log.e("e", e.message.toString())
+            emptyList()
         }
     }
 
@@ -280,17 +447,22 @@ class Firebase @Inject constructor(private var context: Context) {
             }
             arr
         } catch (e: Exception) {
-            Log.d("D", e.message.toString())
+            Log.e("e", e.message.toString())
             null
         }
     }
 
     suspend fun getUser() : User? = auth.currentUser?.run {
         try {
-        val doc = db.collection("users").document(uid).get().await()
-        doc.toObject<User>()
+            if (user.value == null || user.value?.id != uid) {
+                val doc = db.collection("users").document(uid).get().await()
+                user.update {
+                    doc.toObject<User>()
+                }
+            }
+            user.value
         }catch (e: Exception) {
-            Log.d("D", e.message.toString())
+            Log.e("e", e.message.toString())
             null
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,7 +56,7 @@ fun TopBar(navController: NavController, viewModel: TopBarVM = hiltViewModel<Top
                 }
             }
         },
-        title = { TitleTopAppBar(title = title) },
+        title = { TitleTopAppBar(title = if (title == "null") LocalContext.current.getString(R.string.search) else title) },
         actions = {
             Icon(
                 painter = painterResource(id = R.drawable.icon),
