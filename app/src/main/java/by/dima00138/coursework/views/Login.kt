@@ -121,6 +121,7 @@ fun LoginScreen(navController: NavHostController, viewModel: ProfileVM) {
             modifier = Modifier.padding(20.dp, 4.dp),
             onClick = {
                 viewModel.resetState()
+                viewModel.resetFields()
                 navController.navigate(Screen.Register.route)
             },
             text = stringResource(id = R.string.register)

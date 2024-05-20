@@ -113,6 +113,9 @@ class ProfileVM @Inject constructor(
 
     fun resetState() {
         _state.update { SignInState() }
+    }
+
+    fun resetFields() {
         fullName.value = TextFieldValue()
         email.value = TextFieldValue()
         passport.value = TextFieldValue()
@@ -165,6 +168,7 @@ class ProfileVM @Inject constructor(
                     signInError = firebase.context.getString(R.string.user_invalid)
                 )
             }
+            isRefresh.update { false }
             return
         }
         firebase.createUserWithEmail(user = user, { res ->

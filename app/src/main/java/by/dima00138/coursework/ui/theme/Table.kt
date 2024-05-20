@@ -53,6 +53,17 @@ fun <T : IModel> GenericTable(
     val editItem = _editItem.collectAsStateWithLifecycle()
     val _newItem = MutableStateFlow<T?>(exampleItem)
     val newItem = _newItem.collectAsStateWithLifecycle()
+//    val scrollState = rememberLazyListState()
+//    val coroutineScope = rememberCoroutineScope()
+//
+//    LaunchedEffect(scrollState.firstVisibleItemScrollOffset) {
+//        coroutineScope.launch {
+//            scrollState.scrollToItem(
+//                scrollState.firstVisibleItemIndex,
+//                scrollState.firstVisibleItemScrollOffset
+//            )
+//        }
+//    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -62,11 +73,15 @@ fun <T : IModel> GenericTable(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
-                GenericTableHeader(columnNames)
+                GenericTableHeader(
+                    columnNames = columnNames,
+//                    scrollState = scrollState
+                )
             }
             items(data) { item ->
                 if (item == editItem.value) {
                     EditGenericRow(
+//                        scrollState = scrollState,
                         item = item,
                         editItem = _editItem,
                         onUpdateClicked = { it, oldItem ->
@@ -79,6 +94,7 @@ fun <T : IModel> GenericTable(
                     )
                 }else {
                     GenericTableRow(
+//                        scrollState = scrollState,
                         item = item,
                         onDeleteClicked = onDelete,
                         columnValues = getColumnValues(item),
@@ -88,6 +104,7 @@ fun <T : IModel> GenericTable(
             }
             item {
                 EditGenericRow(
+//                    scrollState = scrollState,
                     item = exampleItem,
                     editItem = _newItem,
                     onUpdateClicked = { it, _ ->
@@ -105,11 +122,13 @@ fun <T : IModel> GenericTable(
 
 @Composable
 fun GenericTableHeader(
+    modifier: Modifier = Modifier,
     columnNames: List<String>,
-//    scrollState: NestedScrollConnection
+//    scrollState: LazyListState
 ) {
     LazyRow(
-        modifier = Modifier
+//        state = scrollState,
+        modifier = modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colorScheme.primary)
             .padding(16.dp),
@@ -132,14 +151,16 @@ fun GenericTableHeader(
 
 @Composable
 fun <T : IModel> GenericTableRow(
+    modifier: Modifier = Modifier,
     item: T,
     onDeleteClicked: (T) -> Unit,
     onUpdateClicked: (T) -> Unit,
     columnValues: List<Any?>,
-//    scrollState: NestedScrollConnection
+//    scrollState: LazyListState
 ) {
     LazyRow(
-        modifier = Modifier
+//        state = scrollState,
+        modifier = modifier
             .fillMaxWidth()
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -184,13 +205,16 @@ fun <T : IModel> GenericTableRow(
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun <T : IModel> EditGenericRow(
+    modifier: Modifier = Modifier,
     item: T,
     editItem: MutableStateFlow<T?>,
     onUpdateClicked: (T, T) -> Unit,
     onCancelClicked: () -> Unit,
+//    scrollState: LazyListState
 ) {
     LazyRow(
-        modifier = Modifier
+//        state = scrollState,
+        modifier = modifier
             .fillMaxWidth()
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,

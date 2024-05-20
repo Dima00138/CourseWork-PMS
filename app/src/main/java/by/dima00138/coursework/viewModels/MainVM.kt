@@ -43,6 +43,10 @@ class MainVM @Inject constructor(
     val isRefresh = MutableStateFlow(false)
 
     init {
+        refresh()
+    }
+
+    fun refresh() {
         viewModelScope.launch {
             isRefresh.update { true }
             stations.update {

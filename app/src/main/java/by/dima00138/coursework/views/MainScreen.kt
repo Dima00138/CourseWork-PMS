@@ -28,6 +28,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,6 +48,7 @@ import androidx.navigation.NavController
 import by.dima00138.coursework.Models.Station
 import by.dima00138.coursework.R
 import by.dima00138.coursework.ui.theme.FancyTextField
+import by.dima00138.coursework.ui.theme.LoadingIndicator
 import by.dima00138.coursework.ui.theme.PrimaryFancyButton
 import by.dima00138.coursework.viewModels.Inputs
 import by.dima00138.coursework.viewModels.MainVM
@@ -69,6 +73,18 @@ fun MainScreenContent(navController: NavController, viewModel: MainVM) {
     val whenDateState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
     val returnDateState = rememberDatePickerState(null)
     val stations = viewModel.stations.collectAsStateWithLifecycle()
+    val isRefresh = viewModel.isRefresh.collectAsStateWithLifecycle()
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (isRefresh.value) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            LoadingIndicator()
+        }
+        return
+    }
 
 
     if (showList) {
@@ -107,7 +123,7 @@ fun MainScreenContent(navController: NavController, viewModel: MainVM) {
                     Text("OK")
                 }
 
-            },dismissButton = {
+            }, dismissButton = {
                 TextButton(
                     onClick = {
                         viewModel.onShowDatePickerChange(false, Inputs.None)
@@ -122,19 +138,29 @@ fun MainScreenContent(navController: NavController, viewModel: MainVM) {
                 )
             }
         }
-        Column(
+        PullToRefreshBox(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                stringResource(id = R.string.header_search),
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(16.dp, 24.dp, 16.dp, 16.dp)
-            )
-            SearchForm(navController, viewModel)
+                .pullToRefresh(
+                    isRefreshing = isRefresh.value,
+                    state = pullToRefreshState,
+                    onRefresh = { viewModel.refresh() }),
+            isRefreshing = isRefresh.value,
+            onRefresh = { viewModel.refresh() }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    stringResource(id = R.string.header_search),
+                    style = MaterialTheme.typography.headlineLarge,
+                    modifier = Modifier.padding(16.dp, 24.dp, 16.dp, 16.dp)
+                )
+                SearchForm(navController, viewModel)
+            }
         }
     }
 }

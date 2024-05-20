@@ -382,6 +382,9 @@ class Firebase @Inject constructor(val context: Context) {
                         ZoneOffset.UTC
                     ).format(formatter)
                 )
+                if (LocalDateTime
+                    .ofEpochSecond(scheduleItemDoc["date"].toString().toLong(), 0, ZoneOffset.UTC) <= LocalDateTime.now())
+                    continue
 
                 val stationFrom = db.collection("stations")
                     .document(scheduleItem.from).get().await()

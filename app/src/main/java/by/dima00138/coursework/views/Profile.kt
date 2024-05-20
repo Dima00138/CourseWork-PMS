@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import by.dima00138.coursework.R
 import by.dima00138.coursework.ui.theme.FancyButton
@@ -59,8 +58,7 @@ fun ProfileScreen(navController: NavHostController, viewModel: ProfileVM) {
             isAdmin = (state.value.user?.role  == "admin") || (state.value.user?.role == "manager"),
             onOrdersClicked = {
                 navController.navigate(Screen.Orders.route)  {
-                    popUpTo(navController.graph.findStartDestination().id)
-                    launchSingleTop = true
+
                 }
             },
             onPassengersClicked = {

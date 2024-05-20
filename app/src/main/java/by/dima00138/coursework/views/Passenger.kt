@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -107,7 +108,18 @@ fun UserListItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(user.fullName)
+            val maxLength = 20
+
+            val displayText = if (user.fullName.length > maxLength) {
+                user.fullName.take(maxLength) + "..."
+            } else {
+                user.fullName
+            }
+            Text(
+                displayText,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
             Text(user.passport)
         }
     }

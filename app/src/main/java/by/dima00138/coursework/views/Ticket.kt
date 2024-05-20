@@ -134,7 +134,6 @@ fun TicketGrid(
     val countTicketPerRow = 5
     val countOfVans = tickets.key.countOfVans.toInt()
     val countOfSeats = tickets.key.countOfSeats.toInt()
-    val rows = ceil(countOfSeats.toDouble() / countTicketPerRow).toInt()
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -147,6 +146,8 @@ fun TicketGrid(
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
             )
+            val vanTickets = sortedArr.drop(vanIndex * countOfSeats).take(countOfSeats)
+            val rows = ceil(vanTickets.size.toDouble() / countTicketPerRow).toInt()
             for (rowIndex in 0 until rows) {
                 Column(
                     Modifier
@@ -158,8 +159,8 @@ fun TicketGrid(
                             .padding(8.dp),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        items(sortedArr.chunked(countTicketPerRow)
-                            .getOrNull(rowIndex + (vanIndex * rows))
+                        items(vanTickets.chunked(countTicketPerRow)
+                            .getOrNull(rowIndex)
                             ?: emptyList()) { ticket ->
                             TicketCard(
                                 ticket = ticket,
